@@ -1,2 +1,2 @@
-# zabbix-configuration-event-correlation
- An example to correlate events from different branches
+# zabbix-global-correlation
+ Zabbix "Configuration" => "Event correlation" example

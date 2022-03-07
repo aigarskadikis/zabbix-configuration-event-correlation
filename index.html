@@ -1,0 +1,109 @@
+<html>
+
+<body>
+
+<h1>Description</h1>
+<p>Solution based on icmpping. Every device must be pingable.<p/>
+<p>All devices which belong to one site belongs to one host group, for example 'Location/Site1' (screenshot):<br />
+<img src="location-site1.png" /></p>
+
+
+<h1>Template</h1>
+Import stock "Template Module ICMP Ping":<br />
+<a href="https://git.zabbix.com/projects/ZBX/repos/zabbix/browse/templates/module/00icmp_ping?at=refs%2Fheads%2Frelease%2F5.0" target="_blank">https://git.zabbix.com/projects/ZBX/repos/zabbix/browse/templates/module/00icmp_ping?at=refs%2Fheads%2Frelease%2F5.0</a><br />
+
+<p>
+Alter "Unavailable by ICMP ping" trigger and install trigger tag 'gc' (it means "Global Correlation"):<br />
+<img src="icmp-unavailable-tag-gc.png" /></p>
+
+<h1>tag 'location'</h1>
+Location tag is required so the sites do not try to correlate events in between. This is mandatory constraint for Zabbix build-in "Event correlation" to work.
+<p>Install 'location' tag with a value with match the site name. The value does not matter. But all devices from one site must belong to same value:<br />
+<img src="tag-location-site1.png" /></p>
+
+<p>Now we have 2 sites which have devices:<br />
+<img src="two-sites.png" /></p>
+
+<h1>Mark device(s) to priority</h1>
+
+<p>Most likely  we have host groups already which indicates a priority of devices:<br />
+<br />
+Router is priority 1 (we will use tag 'p1'):<br />
+<img src="router-p1.png" /><br />
+<br />
+
+Core switch is priority 2 (we will use tag 'p2'):<br />
+<img src="core-switch-p2.png" /><br />
+<br />
+
+Switch is priority 3 (we will use tag 'p3'):<br />
+<img src="switch-p3.png" /><br />
+<br />
+
+ESX is priority 4 (we will use tag 'p4'):<br />
+<img src="esx-p4.png" /><br />
+</p>
+
+
+<p>Now we have 2 sites with installed priority. The count of devices does not matter. We can have multiple devices with a same priority:<br />
+<img src="two-sites-with-priority.png" /></p>
+
+<h1>Event correlation</h1>
+
+<p>With 4 segments of network, we need to have 3 rules to close events if the root cause is known. Open "Configuration" => "Event correlation" and install:<br />
+<br />
+<img src="close-p2p3p4-because-of-p1.png" /><br />
+<br />
+<br />
+<img src="close-p3p4-because-of-p2.png" /><br />
+<br />
+<br />
+<img src="close-p4-because-of-p3.png" /><br />
+<br />
+Make sure the operation is "Close old events":<br />
+<img src="close-old-events.png" /><br />
+</p>
+
+<p>Also need another +3 rules to keep closing consequences if the root cause is already known:
+<br />
+<img src="root-cause-p1.png" /><br />
+<br />
+<br />
+<img src="root-cause-p2.png" /><br />
+<br />
+<br />
+<img src="root-cause-p3.png" /><br />
+<br />
+Make sure the operation is "Close new events":<br />
+<img src="root-cause-is-known.png" /><br />
+</p>
+
+<p>If 3 network segments, then 4 rules in total!</p>
+<p>If 4 network segments, then 6 rules in total!</p>
+<p>If 5 network segments, then 8 rules in total!</p>
+<p>If 6 network segments, then 10 rules in total!</p>
+
+
+<h1>Testing</h1>
+
+<p>Make sure template is linked:<br />
+<img src="template-linked.png" /></p>
+
+<p>We can install an unreachable IP address for individual devices and see what will happen:<br />
+<img src="test1.png" /></p>
+
+<p>Result:<br />
+<img src="test1result.png" /></p>
+
+
+<h1>Notification</h1>
+
+<p>It's suggested to install a delay on the action so the root cause is established. If data collection performed every '1m' then install action to open ticket after '3m':<br />
+<img src="delayed-action.png" /></p>
+
+<h1>Appendix</h1>
+<p style='color:red'>When we are using Zabbix Event correlation and a site goes down for multiple hours, it means that <u>every minute</u> it will be +2 inserts <u>per each device</u> which is not reachable. If we keep a location down for multiple hours and if these situations happen 10+ times per month then user experience will sacrifice. because there will be millions of records in database table 'events'. Zabbix frontend will be slow, and it will be hard to repair the speed.</p>
+
+</body>
+
+</html>
